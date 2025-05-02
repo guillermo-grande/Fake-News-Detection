@@ -1,70 +1,68 @@
-import pickle
-import torch
 from utils import preprocess_text
-import torch
-import torch.nn as nn
+import tensorflow as tf
+import streamlit as st
+from tensorflow.keras.models import load_model # type: ignore
+import numpy as np
+import shap
 
-def load_model(bilstm_path: str):
+bilstm_model = None  # Declare bilstm_model as a global variable
+explainability_model = None  # Declare explainability_model as a global variable
+
+# Carga del modelo BiLSTM de TensorFlow
+def load_model(keras_model_path: str):
     global bilstm_model
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    bilstm_model.load_state_dict(torch.load(bilstm_path))
-    bilstm_model.to(device)
-    bilstm_model.eval()
+    bilstm_model = tf.keras.models.load_model(keras_model_path)
+    print("Modelo BiLSTM de Tensorflow cargado correctamente.")
 
-# Predicción con ambos modelos y votación
+# Carga del modelo de explicabilidad
+def load_explainability_model(keras_model_path: str):
+    global explainability_model
+    explainability_model = tf.keras.models.load_model(keras_model_path)
+    print("Modelo de explicabilidad de Tensorflow cargado correctamente.")
 
+# Predicción del modelo BiLSTM
 def predict(text: str) -> dict:
-    proc = preprocess_text(text)
-    # BiLSTM: implementar tokenización idéntica al entrenamiento
-    tokens = proc.split()
-    # Aquí debería ir conversión a ids, padding, torch tensor...
-    with torch.no_grad():
-        inputs = torch.tensor(...)  # placeholder
-        logits = bilstm_model(inputs)
-        bilstm_pred = torch.argmax(logits, dim=1).item()
+    global bilstm_model  # Ensure bilstm_model is accessed as a global variable
+    processed_text = preprocess_text(text)
 
-    # Voting
-    return bilstm_pred
+    # Create batch of size 1 for prediction
+    batch = np.array([processed_text], dtype=object)
+    # Prediction with the TensorFlow model
+    probabilities = bilstm_model.predict(batch)
+    probability = float(probabilities[0, 0])
+    # Get binary label
+    label = int(probability > 0.5)
 
-class BiLSTM(nn.Module):
-    def __init__(self, input_dim=10000, embedding_dim=64, hidden_dim_1=64, hidden_dim_2=32):
-        super(BiLSTM, self).__init__()
-        
-        self.embedding = nn.Embedding(
-            num_embeddings=input_dim,
-            embedding_dim=embedding_dim,
-            padding_idx=0
-        )
-        
-        self.bilstm1 = nn.LSTM(
-            input_size=embedding_dim,
-            hidden_size=hidden_dim_1,
-            batch_first=True,
-            bidirectional=True
-        )
-        
-        self.bilstm2 = nn.LSTM(
-            input_size=hidden_dim_1*2,  # Porque es bidireccional (64 * 2)
-            hidden_size=hidden_dim_2,
-            batch_first=True,
-            bidirectional=True
-        )
+    return label, processed_text, probability
 
-        self.fc1 = nn.Linear(hidden_dim_2 * 2, 16)  # Salida de la segunda BiLSTM
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(16, 1)
-        self.sigmoid = nn.Sigmoid()
-    
-    def forward(self, x):
-        x = self.embedding(x)  # (batch_size, seq_len) → (batch_size, seq_len, 64)
-        out, _ = self.bilstm1(x)  # (batch_size, seq_len, 128)
-        out, _ = self.bilstm2(out)  # (batch_size, seq_len, 64)
-        # Tomamos el último paso de la secuencia
-        out = out[:, -1, :]  # (batch_size, 64)
-        out = self.fc1(out) # (batch_size, 16)
-        out = self.relu(out) 
-        out = self.fc2(out) # (batch_size, 1)
-        return self.sigmoid(out)  # Para clasificación binaria
-    
-# Carga de modelos preentrenados
-bilstm_model = BiLSTM()
+def extract_vectorizer_layer():
+    global bilstm_model
+    if bilstm_model is None:
+        raise ValueError("Model is not loaded. Please load the model first.")
+    for layer in bilstm_model.layers:
+        if "text_vectorization" in layer.name.lower():
+            return layer
+    raise ValueError("Vectorizer layer not found in the model.")
+
+def extract_embedding_layer():
+    global bilstm_model
+    if bilstm_model is None:
+        raise ValueError("Model is not loaded. Please load the model first.")
+    for layer in bilstm_model.layers:
+        if "embedding" in layer.name.lower():
+            # Clone the embedding layer with mask_zero=False
+            cfg = layer.get_config()
+            cfg["mask_zero"] = False
+            emb_no_mask = tf.keras.layers.Embedding.from_config(cfg)
+            emb_no_mask.build((None, 1024))
+            emb_no_mask.set_weights(layer.get_weights())
+            return emb_no_mask
+    raise ValueError("Embedding layer not found in the model.")
+
+def create_explainer(background_data_path: str):
+    global bilstm_model
+    if bilstm_model is None:
+        raise ValueError("Model is not loaded. Please load the model first.")
+    background_data = np.load(background_data_path)
+    explainer = shap.GradientExplainer(explainability_model, [background_data])
+    return explainer
