@@ -1,24 +1,16 @@
 from utils import preprocess_text
 import tensorflow as tf
 import streamlit as st
-from tensorflow.keras.models import load_model # type: ignore
 import numpy as np
-import shap
 
-bilstm_model = None  # Declare bilstm_model as a global variable
-explainability_model = None  # Declare explainability_model as a global variable
+# Variable global para el modelo BiLSTM
+bilstm_model = None
 
 # Carga del modelo BiLSTM de TensorFlow
 def load_model(keras_model_path: str):
     global bilstm_model
     bilstm_model = tf.keras.models.load_model(keras_model_path)
     print("Modelo BiLSTM de Tensorflow cargado correctamente.")
-
-# Carga del modelo de explicabilidad
-def load_explainability_model(keras_model_path: str):
-    global explainability_model
-    explainability_model = tf.keras.models.load_model(keras_model_path)
-    print("Modelo de explicabilidad de Tensorflow cargado correctamente.")
 
 # Predicción del modelo BiLSTM
 def predict(text: str) -> dict:
@@ -59,10 +51,3 @@ def extract_embedding_layer():
             return emb_no_mask
     raise ValueError("Embedding layer not found in the model.")
 
-def create_explainer(background_data_path: str):
-    global bilstm_model
-    if bilstm_model is None:
-        raise ValueError("Model is not loaded. Please load the model first.")
-    background_data = np.load(background_data_path)
-    explainer = shap.GradientExplainer(explainability_model, [background_data])
-    return explainer

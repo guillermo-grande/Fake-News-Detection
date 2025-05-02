@@ -1,6 +1,6 @@
 import streamlit as st
-from model import load_model, predict, load_explainability_model, extract_vectorizer_layer, extract_embedding_layer, create_explainer
-from explainer import get_top_shap_tokens, generate_explanation
+from model import load_model, predict, extract_vectorizer_layer, extract_embedding_layer
+from explainer import load_explainability_model, create_explainer, get_top_shap_tokens, generate_explanation
 import matplotlib.pyplot as plt
 
 # Cargar recursos
@@ -37,8 +37,10 @@ if st.button("Clasificar noticia 🕵️‍♂️"):
         st.subheader("Gráfico de los tokens más influyentes (SHAP) para la clasificación")
         st.pyplot(plt)
 
-        # st.markdown("---")
+        st.markdown("---")
+
         # Explicación LLM 
-        # explanation = generate_explanation(token_vals)
-        # st.subheader("Explicación LLM")
-        # st.write(explanation)
+        with st.spinner("Conectando con la API del LLM y generando resultados..."):
+            explanation = generate_explanation(token_vals, label)
+        st.subheader("Explicación Intuitiva basada en LLM")
+        st.write(explanation)

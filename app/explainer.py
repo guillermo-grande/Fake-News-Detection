@@ -2,6 +2,38 @@ import shap
 from utils import preprocess_text
 import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
+from langchain import PromptTemplate, LLMChain
+from langchain.chat_models import ChatOpenAI
+from dotenv import load_dotenv
+
+# Variable global para el modelo de explicabilidad
+explainability_model = None
+
+# Prompt template
+template = "{raw_prompt}"
+prompt = PromptTemplate(input_variables=["raw_prompt"], template=template)
+
+# Definimos el modelo a utilizar
+load_dotenv() # Cargamos la API KEY
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
+
+# Cadena de LangChain (Modelo + Prompt)
+chain = LLMChain(llm=llm, prompt=prompt)
+
+# Carga del modelo de explicabilidad
+def load_explainability_model(keras_model_path: str):
+    global explainability_model
+    explainability_model = tf.keras.models.load_model(keras_model_path)
+    print("Modelo de explicabilidad de Tensorflow cargado correctamente.")
+
+def create_explainer(background_data_path: str):
+    global explainability_model
+    if explainability_model is None:
+        raise ValueError("Model for explainability is not loaded. Please load the model first.")
+    background_data = np.load(background_data_path)
+    explainer = shap.GradientExplainer(explainability_model, [background_data])
+    return explainer
 
 # Crearemos una función para facilitar el proceso
 def get_top_shap_tokens(explainer, vectorizer, emb_no_mask, text, true_label, top_n=10):
@@ -47,6 +79,44 @@ def get_top_shap_tokens(explainer, vectorizer, emb_no_mask, text, true_label, to
     # 8) Return the list of (token, score)
     return selected, plt
 
-# Explicación con LLM
-def generate_explanation(token_vals: list) -> str:
-    return "hola"
+def generate_prompt(token_vals: list[tuple[str, float]], label: int) -> str:
+    """
+    Genera un prompt para un LLM que explique, en formato Markdown,
+    por qué cada token influyó en la clasificación de una noticia como verdadera o falsa.
+    """
+    # Mapeo de la etiqueta a texto
+    label_text = "verdadera" if label == 1 else "falsa"
+
+    # Cabecera del prompt
+    prompt = (
+        f"Eres un analista de ML que debe explicar por qué ciertos tokens "
+        f"influyeron en la clasificación de una noticia como **{label_text}**.\n\n"
+        "A continuación tienes los 10 tokens más influyentes con sus valores SHAP:\n"
+    )
+
+    # Lista de tokens con sus valores
+    for token, shap in token_vals:
+        prompt += f"- Token: \"{token}\", SHAP value: {shap:.4f}\n"
+
+    # Instrucciones para el LLM: generar Markdown
+    prompt += (
+        "\nPor cada token, proporciona una explicación de una línea de por qué "
+        f"posiblemente influyó en la clasificación hacia **{label_text}**. "
+        "Devuélvelo exclusivamente en formato Markdown usando listas:\n"
+        "- **token** (shap_value): explicación.\n"
+    )
+
+    return prompt
+
+def generate_explanation(token_vals: list[tuple[str, float]], label: int) -> str:
+    """
+    Utiliza un modelo de lenguaje para generar una explicación en formato Markdown
+    sobre por qué ciertos tokens influyeron en la clasificación de una noticia.
+    """
+    global chain
+
+    # Generamos la explicación
+    raw = generate_prompt(token_vals, label)
+    result = chain.run(raw_prompt=raw)
+
+    return result
