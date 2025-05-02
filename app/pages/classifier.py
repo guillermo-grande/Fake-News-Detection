@@ -34,13 +34,18 @@ if st.button("Clasificar noticia 🕵️‍♂️"):
         # Explicabilidad
         with st.spinner("Cargando modelos de explicabilidad y generando resultados..."):
             token_vals, plt = get_top_shap_tokens(explainer, vectorizer, emb_no_mask, text=processed_text, true_label=label, top_n=10)
-        st.subheader("Gráfico de los tokens más influyentes (SHAP) para la clasificación")
-        st.pyplot(plt)
+        st.subheader("Gráfico de las palabras más influyentes para la clasificación (SHAP)")
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.pyplot(plt)
 
         st.markdown("---")
 
         # Explicación LLM 
         with st.spinner("Conectando con la API del LLM y generando resultados..."):
-            explanation = generate_explanation(token_vals, label)
-        st.subheader("Explicación Intuitiva basada en LLM")
-        st.write(explanation)
+            explanation_shap, explanation_summary = generate_explanation(token_vals, label, text)
+        st.subheader("Explicación intuitiva basada en LLM")
+        st.markdown("##### Basándonos en las palabras más influyentes devueltas por SHAP:")
+        st.write(explanation_shap)
+        st.markdown("##### Basándonos en la noticia completa:")
+        st.write(explanation_summary)

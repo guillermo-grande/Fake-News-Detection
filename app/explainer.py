@@ -6,20 +6,10 @@ import tensorflow as tf
 from langchain import PromptTemplate, LLMChain
 from langchain.chat_models import ChatOpenAI
 from dotenv import load_dotenv
+from langchain.schema import HumanMessage
 
 # Variable global para el modelo de explicabilidad
 explainability_model = None
-
-# Prompt template
-template = "{raw_prompt}"
-prompt = PromptTemplate(input_variables=["raw_prompt"], template=template)
-
-# Definimos el modelo a utilizar
-load_dotenv() # Cargamos la API KEY
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
-
-# Cadena de LangChain (Modelo + Prompt)
-chain = LLMChain(llm=llm, prompt=prompt)
 
 # Carga del modelo de explicabilidad
 def load_explainability_model(keras_model_path: str):
@@ -72,12 +62,24 @@ def get_top_shap_tokens(explainer, vectorizer, emb_no_mask, text, true_label, to
     plt.yticks(y_pos, tokens)
     plt.axvline(0, color='black', linewidth=0.8)
     plt.gca().invert_yaxis()
-    plt.title(f"Mejores {top_n} tokens influyendo en la clasificación hacia {'Real' if true_label==1 else 'Falsa'}")
+    plt.title(f"Las {top_n} palabras más influyentes para clasificar la noticia como {'real' if true_label==1 else 'falsa'}")
     plt.xlabel("SHAP value")
     plt.tight_layout()
 
     # 8) Return the list of (token, score)
     return selected, plt
+
+# Prompt template
+template = "{raw_prompt}"
+prompt = PromptTemplate(input_variables=["raw_prompt"], template=template)
+
+# Definimos el modelo a utilizar
+load_dotenv() # Cargamos la API KEY
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
+
+# Cadena de LangChain (Modelo + Prompt)
+chain = LLMChain(llm=llm, prompt=prompt)
+
 
 def generate_prompt(token_vals: list[tuple[str, float]], label: int) -> str:
     """
@@ -108,15 +110,31 @@ def generate_prompt(token_vals: list[tuple[str, float]], label: int) -> str:
 
     return prompt
 
-def generate_explanation(token_vals: list[tuple[str, float]], label: int) -> str:
+def generate_explanation(token_vals: list[tuple[str, float]], label: int, text: str) -> tuple[str, str]:
     """
-    Utiliza un modelo de lenguaje para generar una explicación en formato Markdown
-    sobre por qué ciertos tokens influyeron en la clasificación de una noticia.
+    Genera una explicación Markdown basada en los valores SHAP y una
+    explicación breve (máx. 3 líneas) de por qué la noticia original fue
+    clasificada como verdadera o falsa.
     """
-    global chain
+    global llm  # Instancia de ChatOpenAI
+    global chain  # Cadena existente para valores SHAP
 
-    # Generamos la explicación
-    raw = generate_prompt(token_vals, label)
-    result = chain.run(raw_prompt=raw)
+    # Generar explicación basada en los valores SHAP
+    shap_prompt = generate_prompt(token_vals, label)
+    explanation_shap = chain.run(raw_prompt=shap_prompt)
 
-    return result
+    # Crear prompt para explicación breve según el texto y la etiqueta
+    label_str = "falsa" if label == 0 else "real"
+    summary_prompt = (
+        f"Dado el siguiente texto de una noticia que ha sido clasificada como {label_str} por un modelo de inteligencia artificial:\n\n{text}\n\n"
+        f"Explica en un máximo de cuatro líneas las razones principales por las que la noticia es {label_str}. "
+        "No repitas el texto, solo proporciona una explicación directa y razonada en español, sin rodeos ni títulos. "
+        "Evita basarte en tu conocimiento sobre los hechos, únicamente céntrate en el texto proporcionado. "
+        "Usa un lenguaje claro y objetivo."
+    )
+
+    # Llamar al modelo directamente para obtener la explicación breve
+    response = llm.invoke(summary_prompt)
+    explanation_summary = response.content.strip()
+
+    return explanation_shap, explanation_summary
