@@ -1,6 +1,7 @@
 import streamlit as st
 from model import load_model, predict, extract_vectorizer_layer, extract_embedding_layer
 from explainer import load_explainability_model, create_explainer, get_top_shap_tokens, generate_explanation
+import os
 import matplotlib.pyplot as plt
 
 # Cargar recursos
@@ -41,11 +42,15 @@ if st.button("Clasificar noticia 🕵️‍♂️"):
 
         st.markdown("---")
 
-        # Explicación LLM 
-        with st.spinner("Conectando con la API del LLM y generando resultados..."):
-            explanation_shap, explanation_summary = generate_explanation(token_vals, label, text)
-        st.subheader("Explicación intuitiva basada en LLM")
-        st.markdown("##### Basándonos en las palabras más influyentes devueltas por SHAP:")
-        st.write(explanation_shap)
-        st.markdown("##### Basándonos en la noticia completa:")
-        st.write(explanation_summary)
+        # Verificar si existe la clave de API de OpenAI
+        if "OPENAI_API_KEY" not in os.environ:
+            st.error("Se requiere una clave de API de OpenAI para generar explicaciones. Por favor, configura la variable de entorno 'OPENAI_API_KEY'.")
+        else:
+            # Explicación LLM 
+            with st.spinner("Conectando con la API del LLM y generando resultados..."):
+                explanation_shap, explanation_summary = generate_explanation(token_vals, label, text)
+            st.subheader("Explicación intuitiva basada en LLM")
+            st.markdown("##### Basándonos en las palabras más influyentes devueltas por SHAP:")
+            st.write(explanation_shap)
+            st.markdown("##### Basándonos en la noticia completa:")
+            st.write(explanation_summary)

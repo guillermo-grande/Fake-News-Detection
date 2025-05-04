@@ -3,8 +3,8 @@ from utils import preprocess_text
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from langchain import PromptTemplate, LLMChain
-from langchain.chat_models import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 from langchain.schema import HumanMessage
 
@@ -17,6 +17,7 @@ def load_explainability_model(keras_model_path: str):
     explainability_model = tf.keras.models.load_model(keras_model_path)
     print("Modelo de explicabilidad de Tensorflow cargado correctamente.")
 
+# Crear el modelo de explicabilidad
 def create_explainer(background_data_path: str):
     global explainability_model
     if explainability_model is None:
@@ -78,7 +79,7 @@ load_dotenv() # Cargamos la API KEY
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
 
 # Cadena de LangChain (Modelo + Prompt)
-chain = LLMChain(llm=llm, prompt=prompt)
+chain = prompt | llm
 
 
 def generate_prompt(token_vals: list[tuple[str, float]], label: int) -> str:
@@ -121,7 +122,7 @@ def generate_explanation(token_vals: list[tuple[str, float]], label: int, text: 
 
     # Generar explicación basada en los valores SHAP
     shap_prompt = generate_prompt(token_vals, label)
-    explanation_shap = chain.run(raw_prompt=shap_prompt)
+    explanation_shap = chain.invoke(input=shap_prompt)
 
     # Crear prompt para explicación breve según el texto y la etiqueta
     label_str = "falsa" if label == 0 else "real"
@@ -134,7 +135,6 @@ def generate_explanation(token_vals: list[tuple[str, float]], label: int, text: 
     )
 
     # Llamar al modelo directamente para obtener la explicación breve
-    response = llm.invoke(summary_prompt)
-    explanation_summary = response.content.strip()
+    explanation_summary = llm.invoke(summary_prompt)
 
-    return explanation_shap, explanation_summary
+    return explanation_shap.content, explanation_summary.content
