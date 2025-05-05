@@ -1,4 +1,4 @@
-# Fake News Detection using Artificial Intelligence
+# Fake News Detection using Artificial Intelligence 📰❌
 
 This project implements a complete pipeline for extracting, preprocessing, and automatically classifying fake news using Artificial Intelligence models. It includes:
 
@@ -13,7 +13,7 @@ This project implements a complete pipeline for extracting, preprocessing, and a
 
 ---
 
-## Installation
+## Installation ⬇️
 
 1. Clone the repository:
 
@@ -36,7 +36,7 @@ This project implements a complete pipeline for extracting, preprocessing, and a
 
 ---
 
-## Execution
+## Execution ▶️
 
 1. Navigate to the app folder:
 
@@ -52,7 +52,7 @@ This project implements a complete pipeline for extracting, preprocessing, and a
 
 ---
 
-## License
+## License 📄
 
 This project is licensed under the MIT License. See the `LICENSE` file for more details.
 
