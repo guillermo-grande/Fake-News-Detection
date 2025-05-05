@@ -4,6 +4,6 @@ MLP, Pytorch, TF-IDF, 7.6 seg, 98.22 % (Época 2), 98.5 %
 MLP, Pytorch, BERT (Sentence-Transformers Embeddings), 83.2 seg, 95.69 % (Época 15), 96.28 %
 LSTM, Pytorch, Tokenizer (TensorFlow), 65.1 seg, 98.12 % (Época 14), 98.13 %
 BiLSTM, Pytorch, Tokenizer (TensorFlow), 124.7 seg, 97.94 % (Época 7), 98.88 %
-BiLSTM, TensorFlow, Tokenizer (TensorFlow), 135.3 seg, 99.85 % (Época 2), 99.11 %
+BiLSTM, TensorFlow, Tokenizer (TensorFlow), 135.3 seg, 99.75 % (Época 4), 99.15 %
 BiLSTM, Pytorch, Word2Vec, ~600 seg, 98.46 % (Época 8), 98.34 %
 BiLSTM + Self-Attention, Pytorch, Tokenizer (TensorFlow), ~3000 seg, 98.66 % (Época 5), 98.88 %
