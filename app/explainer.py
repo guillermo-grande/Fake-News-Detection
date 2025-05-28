@@ -82,19 +82,21 @@ llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
 chain = prompt | llm
 
 
-def generate_prompt(token_vals: list[tuple[str, float]], label: int) -> str:
+def generate_prompt(token_vals: list[tuple[str, float]], label: int, new: str) -> str:
     """
     Genera un prompt para un LLM que explique, en formato Markdown,
     por qué cada token influyó en la clasificación de una noticia como verdadera o falsa.
     """
     # Mapeo de la etiqueta a texto
-    label_text = "verdadera" if label == 1 else "falsa"
+    label_text = "real" if label == 1 else "fake"
 
     # Cabecera del prompt
     prompt = (
-        f"Eres un analista de ML que debe explicar por qué ciertos tokens "
-        f"influyeron en la clasificación de una noticia como **{label_text}**.\n\n"
-        "A continuación tienes los 10 tokens más influyentes con sus valores SHAP:\n"
+        "You are a Machine Learning analyst who must explain why certain tokens "
+        f"influenced the classification of a news article as **{label_text}**.\n\n"
+        "The news article in question is the following:"
+        f"{new}\n\n"
+        "Below are the 10 most influential tokens with their SHAP values:\n"
     )
 
     # Lista de tokens con sus valores
@@ -103,38 +105,25 @@ def generate_prompt(token_vals: list[tuple[str, float]], label: int) -> str:
 
     # Instrucciones para el LLM: generar Markdown
     prompt += (
-        "\nPor cada token, proporciona una explicación de una línea de por qué "
-        f"posiblemente influyó en la clasificación hacia **{label_text}**. "
-        "Devuélvelo exclusivamente en formato Markdown usando listas:\n"
-        "- **token** (shap_value): explicación.\n"
+        "\nFor each token, provide a one-line explanation of why it may have influenced "
+        f"the classification towards **{label_text}**. "
+        "Return it exclusively in Markdown format using lists:\n"
+        "- **token** (shap_value): explanation.\n"
+        "Translate your answer to Spanish.\n"
     )
 
     return prompt
 
 def generate_explanation(token_vals: list[tuple[str, float]], label: int, text: str) -> tuple[str, str]:
     """
-    Genera una explicación Markdown basada en los valores SHAP y una
-    explicación breve (máx. 3 líneas) de por qué la noticia original fue
-    clasificada como verdadera o falsa.
+    Genera una explicación Markdown basada en los valores SHAP de los tokens más influyentes
+    y en la propia noticia de por qué ha sido clasificada como verdadera o falsa.
     """
     global llm  # Instancia de ChatOpenAI
     global chain  # Cadena existente para valores SHAP
 
     # Generar explicación basada en los valores SHAP
-    shap_prompt = generate_prompt(token_vals, label)
-    explanation_shap = chain.invoke(input=shap_prompt)
+    shap_prompt = generate_prompt(token_vals, label, text)
+    explanation = chain.invoke(input=shap_prompt)
 
-    # Crear prompt para explicación breve según el texto y la etiqueta
-    label_str = "falsa" if label == 0 else "real"
-    summary_prompt = (
-        f"Dado el siguiente texto de una noticia que ha sido clasificada como {label_str} por un modelo de inteligencia artificial:\n\n{text}\n\n"
-        f"Explica en un máximo de cuatro líneas las razones principales por las que la noticia es {label_str}. "
-        "No repitas el texto, solo proporciona una explicación directa y razonada en español, sin rodeos ni títulos. "
-        "Evita basarte en tu conocimiento sobre los hechos, únicamente céntrate en el texto proporcionado. "
-        "Usa un lenguaje claro y objetivo."
-    )
-
-    # Llamar al modelo directamente para obtener la explicación breve
-    explanation_summary = llm.invoke(summary_prompt)
-
-    return explanation_shap.content, explanation_summary.content
+    return explanation.content
