@@ -114,7 +114,7 @@ def generate_prompt(token_vals: list[tuple[str, float]], label: int, new: str) -
 
     return prompt
 
-def generate_explanation(token_vals: list[tuple[str, float]], label: int, text: str) -> tuple[str, str]:
+def generate_explanation(token_vals: list[tuple[str, float]], label: int, text: str) -> str:
     """
     Genera una explicación Markdown basada en los valores SHAP de los tokens más influyentes
     y en la propia noticia de por qué ha sido clasificada como verdadera o falsa.
@@ -124,6 +124,6 @@ def generate_explanation(token_vals: list[tuple[str, float]], label: int, text: 
 
     # Generar explicación basada en los valores SHAP
     shap_prompt = generate_prompt(token_vals, label, text)
-    explanation = chain.invoke(input=shap_prompt)
+    explanation = chain.invoke({"raw_prompt": shap_prompt})
 
     return explanation.content
