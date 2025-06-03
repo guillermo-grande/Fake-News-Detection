@@ -13,7 +13,7 @@ def load_model(keras_model_path: str):
     print("Modelo BiLSTM de Tensorflow cargado correctamente.")
 
 # Predicción del modelo BiLSTM
-def predict(text: str) -> dict:
+def predict(text: str) -> tuple:
     global bilstm_model  # Ensure bilstm_model is accessed as a global variable
     processed_text = preprocess_text(text)
 
