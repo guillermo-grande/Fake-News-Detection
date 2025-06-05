@@ -27,6 +27,7 @@ if st.button("Clasificar noticia 🕵️‍♂️"):
         # Display preprocessed text in an expander
         with st.expander("Ver detalles de la clasificación"):
             st.write(f"**Texto preprocesado:** {processed_text}")
+            st.write(f"**Modelo utilizado:** BiLSTM - TensorFlow")
             st.write(f"**Probabilidad devuelta por el modelo:** {probability:.4f}")
             st.write(f"**Etiqueta binaria:** {label}")
 
@@ -48,9 +49,8 @@ if st.button("Clasificar noticia 🕵️‍♂️"):
         else:
             # Explicación LLM 
             with st.spinner("Conectando con la API del LLM y generando resultados..."):
-                explanation_shap, explanation_summary = generate_explanation(token_vals, label, text)
+                explanation = generate_explanation(token_vals, label, text)
             st.subheader("Explicación intuitiva basada en LLM")
-            st.markdown("##### Basándonos en las palabras más influyentes devueltas por SHAP:")
-            st.write(explanation_shap)
-            st.markdown("##### Basándonos en la noticia completa:")
-            st.write(explanation_summary)
+            st.markdown("##### Basándonos en las palabras más influyentes devueltas por SHAP y en la propia noticia:")
+            st.write(explanation)
+

@@ -6,19 +6,7 @@ st.title("Resultados 📋")
 
 st.markdown("---")
 
-# Subtítulo para la información del dataset y preprocesamiento
-st.subheader("Datos del Dataset Preprocesado")
 
-# Añadimos espacio
-st.write("")
-
-# Creamos columnas
-col1, col2 = st.columns([2, 3])  # Ajustamos las proporciones para que ambas columnas sean iguales
-with col1:
-    st.image("static/classes_distribution.png", use_container_width=True)
-
-with col2:
-    st.image("static/length_distribution.png", use_container_width=True)
 
 # Subtítulo para las métricas de evaluación de los modelos
 st.subheader("Métricas de los Modelos entrenados")
@@ -47,3 +35,21 @@ df['Precisión en Test (%)'] = df['Precisión en Test (%)'].astype(str) + ' %'
 styled_df = df.style.apply(highlight_precision_cell, axis=1)
 
 st.dataframe(styled_df)
+
+
+st.markdown("---")
+
+
+# Subtítulo para la información del dataset y preprocesamiento
+st.subheader("Datos del Dataset Preprocesado")
+
+# Añadimos espacio
+st.write("")
+
+# Creamos columnas
+col1, col2 = st.columns([2, 3])  # Ajustamos las proporciones para que ambas columnas sean iguales
+with col1:
+    st.image("static/classes_distribution.png", use_container_width=True)
+
+with col2:
+    st.image("static/length_distribution.png", use_container_width=True)
