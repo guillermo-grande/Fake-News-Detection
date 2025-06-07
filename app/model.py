@@ -1,5 +1,8 @@
 from utils import preprocess_text
 import tensorflow as tf
+import logging
+tf.get_logger().setLevel(logging.ERROR)
+
 import streamlit as st
 import numpy as np
 

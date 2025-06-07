@@ -1,0 +1,7 @@
+# Streamlit configuration to disable file watching
+[server]
+fileWatcherType = "none"
+
+# Suppress logging below ERROR
+[logger]
+level = "error"
