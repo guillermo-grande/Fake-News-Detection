@@ -15,40 +15,36 @@ This project implements a complete pipeline for extracting, preprocessing, and a
 
 ## Installation ⬇️
 
-1. Clone the repository:
+1. Clone the repository and navigate to the `app` directory:
 
      ```bash
      git clone https://github.com/guillermo-grande/Fake-News-Detection.git
      cd Fake-News-Detection
+     cd app
      ```
 2. Create and activate a virtual environment (example using `venv`):
 
      ```bash
-     python3 -m venv venv
+     python3 -m venv .venv
      source venv/bin/activate    # Linux / macOS
      venv\Scripts\activate       # Windows
      ```
 3. Install the dependencies:
 
      ```bash
-     pip install -r app/requirements.txt
+     pip install -r requirements.txt
      ```
 
 ---
 
 ## Execution ▶️
 
-1. Navigate to the app folder:
-
-     ```bash
-     cd app
-     ```
-2. Start the Streamlit application:
+1. Start the Streamlit application:
 
      ```bash
      streamlit run app.py
      ```
-3. Open your browser at the URL displayed in the console (default is `http://localhost:8501`).
+2. Open your browser at the URL displayed in the console (default is `http://localhost:8501`).
 
 ---
 
