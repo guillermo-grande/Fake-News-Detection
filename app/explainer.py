@@ -109,7 +109,7 @@ def generate_prompt(token_vals: list[tuple[str, float]], label: int, new: str) -
         f"the classification towards **{label_text}**. "
         "Return it exclusively in Markdown format using lists:\n"
         "- **token** (shap_value): explanation.\n"
-        "Translate your answer to Spanish.\n"
+        "Only return answers in spanish.\n"
     )
 
     return prompt
